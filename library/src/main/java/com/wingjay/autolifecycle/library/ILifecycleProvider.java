@@ -1,7 +1,10 @@
 package com.wingjay.autolifecycle.library;
 
 import android.support.annotation.NonNull;
-import rx.Observable;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
+
 
 /**
  * ILifecycleProvider
@@ -15,12 +18,12 @@ public interface ILifecycleProvider {
      *
      * @param event the event that triggers unsubscription
      */
-    <T> Observable.Transformer<T, T> bindUntilEvent(@NonNull IContextLifecycle event);
+    <T> ObservableTransformer<T, T> bindUntilEvent(@NonNull IContextLifecycle event);
 
     /**
      * Binds a default event, normally DESTROY event
      */
-    <T> Observable.Transformer<T, T> bindDefault();
+    <T> ObservableTransformer<T, T> bindDefault();
 
     /**
      * Execute an Observable once event appears.

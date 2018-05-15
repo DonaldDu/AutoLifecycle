@@ -2,11 +2,14 @@ package com.wingjay.autolifecycle.library;
 
 import android.support.annotation.NonNull;
 
-import rx.Observable;
-import rx.Observable.Transformer;
-import rx.Subscriber;
-import rx.functions.Func1;
-import rx.subjects.PublishSubject;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Predicate;
+import io.reactivex.subjects.PublishSubject;
+
 
 /**
  * LifecycleProviderDelegate
@@ -16,41 +19,53 @@ import rx.subjects.PublishSubject;
  */
 public class LifecycleProviderDelegate {
 
-    public <T> Transformer<T, T> bindUntilEvent(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject, @NonNull final IContextLifecycle event) {
+    public <T> ObservableTransformer<T, T> bindUntilEvent(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject, @NonNull final IContextLifecycle event) {
         ALog.i("bindUntilEvent " + event);
-        return new Observable.Transformer<T, T>() {
+        return new ObservableTransformer<T, T>() {
             @Override
-            public Observable<T> call(Observable<T> sourceObservable) {
-                Observable<IContextLifecycle> o = lifecycleSubject.takeFirst(new Func1<IContextLifecycle, Boolean>() {
+            public ObservableSource<T> apply(Observable<T> upstream) {
+                return upstream.takeUntil(lifecycleSubject.skipWhile(new Predicate<IContextLifecycle>() {
                     @Override
-                    public Boolean call(IContextLifecycle contextLifecycle) {
+                    public boolean test(IContextLifecycle lifecycle) {
                         ALog.i(event + " appears!");
-                        return contextLifecycle.equals(event);
+                        return !lifecycle.equals(event);
                     }
-                });
-                return sourceObservable.takeUntil(o);
+                }));
             }
         };
     }
 
     public void executeWhen(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject, @NonNull final Observable observable, @NonNull final IContextLifecycle event) {
-        lifecycleSubject.takeFirst(new Func1<IContextLifecycle, Boolean>() {
+        final String tag = event.toString() + " executeWhen ";
+        lifecycleSubject.skipWhile(new Predicate<IContextLifecycle>() {
             @Override
-            public Boolean call(IContextLifecycle contextLifecycle) {
-                return contextLifecycle.equals(event);
+            public boolean test(IContextLifecycle lifecycle) {
+                return !lifecycle.equals(event);
             }
-        }).subscribe(new Subscriber<IContextLifecycle>() {
+        }).subscribe(new Observer<IContextLifecycle>() {
+            Disposable disposable;
+
             @Override
-            public void onCompleted() {
+            public void onSubscribe(Disposable d) {
+                this.disposable = d;
+                ALog.i(tag + " onSubscribe");
+            }
+
+            @Override
+            public void onNext(IContextLifecycle lifecycle) {
+                ALog.i(tag + " onNext>>>> " + lifecycle);
+                if (disposable != null) disposable.dispose();
                 observable.subscribe();
             }
 
             @Override
             public void onError(Throwable e) {
+                ALog.i(tag + " onError");
             }
 
             @Override
-            public void onNext(IContextLifecycle iContextLifecycle) {
+            public void onComplete() {
+                ALog.i(tag + " onComplete");
             }
         });
     }

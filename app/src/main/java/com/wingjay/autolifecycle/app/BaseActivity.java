@@ -3,14 +3,17 @@ package com.wingjay.autolifecycle.app;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+
 import com.wingjay.autolifecycle.library.ALog;
 import com.wingjay.autolifecycle.library.IContextLifecycle;
 import com.wingjay.autolifecycle.library.ILifecycleProvider;
 import com.wingjay.autolifecycle.library.LifecycleProviderDelegate;
 import com.wingjay.autolifecycle.library.lifecycle.ActivityLifecycle;
-import rx.Observable;
-import rx.Observable.Transformer;
-import rx.subjects.PublishSubject;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.subjects.PublishSubject;
+
 
 /**
  * author: wingjay
@@ -96,12 +99,12 @@ public class BaseActivity extends AppCompatActivity implements ILifecycleProvide
     }
 
     @Override
-    public <T> Transformer<T, T> bindUntilEvent(@NonNull IContextLifecycle event) {
+    public <T> ObservableTransformer<T, T> bindUntilEvent(@NonNull IContextLifecycle event) {
         return lifecycleProviderDelegate.bindUntilEvent(lifecycleSubject, event);
     }
 
     @Override
-    public <T> Transformer<T, T> bindDefault() {
+    public <T> ObservableTransformer<T, T> bindDefault() {
         return lifecycleProviderDelegate.bindUntilEvent(lifecycleSubject, ActivityLifecycle.DESTROY);
     }
 
