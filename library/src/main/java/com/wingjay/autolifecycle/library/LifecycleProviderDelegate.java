@@ -1,6 +1,7 @@
 package com.wingjay.autolifecycle.library;
 
 import android.support.annotation.NonNull;
+
 import rx.Observable;
 import rx.Observable.Transformer;
 import rx.Subscriber;
@@ -15,28 +16,24 @@ import rx.subjects.PublishSubject;
  */
 public class LifecycleProviderDelegate {
 
-    public <T> Transformer<T, T> bindUntilEvent(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject,
-                                                @NonNull final IContextLifecycle event) {
+    public <T> Transformer<T, T> bindUntilEvent(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject, @NonNull final IContextLifecycle event) {
         ALog.i("bindUntilEvent " + event);
         return new Observable.Transformer<T, T>() {
             @Override
             public Observable<T> call(Observable<T> sourceObservable) {
-                Observable<IContextLifecycle> o =
-                    lifecycleSubject.takeFirst(new Func1<IContextLifecycle, Boolean>() {
-                        @Override
-                        public Boolean call(IContextLifecycle contextLifecycle) {
-                            ALog.i(event + "appears!");
-                            return contextLifecycle.equals(event);
-                        }
-                    });
+                Observable<IContextLifecycle> o = lifecycleSubject.takeFirst(new Func1<IContextLifecycle, Boolean>() {
+                    @Override
+                    public Boolean call(IContextLifecycle contextLifecycle) {
+                        ALog.i(event + " appears!");
+                        return contextLifecycle.equals(event);
+                    }
+                });
                 return sourceObservable.takeUntil(o);
             }
         };
     }
 
-    public void executeWhen(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject,
-                            @NonNull final Observable observable,
-                            @NonNull final IContextLifecycle event) {
+    public void executeWhen(@NonNull final PublishSubject<IContextLifecycle> lifecycleSubject, @NonNull final Observable observable, @NonNull final IContextLifecycle event) {
         lifecycleSubject.takeFirst(new Func1<IContextLifecycle, Boolean>() {
             @Override
             public Boolean call(IContextLifecycle contextLifecycle) {
@@ -47,10 +44,14 @@ public class LifecycleProviderDelegate {
             public void onCompleted() {
                 observable.subscribe();
             }
+
             @Override
-            public void onError(Throwable e) {}
+            public void onError(Throwable e) {
+            }
+
             @Override
-            public void onNext(IContextLifecycle iContextLifecycle) {}
+            public void onNext(IContextLifecycle iContextLifecycle) {
+            }
         });
     }
 }
